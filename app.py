@@ -16,52 +16,52 @@ def generate_prompt(category):
         temperature = float(request.args.get('temperature', 0.7))  # ความคิดสร้างสรรค์ (0.0 - 1.0)
         max_tokens = int(request.args.get('max_tokens', 300))  # ความยาวของ prompt
 
-        # ตรวจสอบว่า model และ prompt มีค่าหรือไม่
-        if not model_type:
-            return jsonify({"error": "Missing required argument: 'model'"}), 400
-
         # ข้อความที่ใช้ให้ GPT สร้าง Prompt
         prompt_text = f"""
         Generate a highly detailed AI video prompt for {category} in {model_type}.
         The prompt should include:
-        - Scene composition
-        - Lighting & Atmosphere
-        - Cinematic effects
-        - Camera movements
-        - Aspect ratio, resolution, and frame rate
+        - A cinematic scene description
+        - Lighting and atmosphere
+        - Camera movements and effects
+        Write it in a **concise, clear, and cinematic format** like a **film direction**.
         """
 
-        # เรียกใช้ OpenAI API
+        # เรียกใช้ GPT เพื่อสร้าง AI Video Prompt
         response = client.chat.completions.create(
-            model="gpt-4-turbo",  # ระบุโมเดลที่ต้องการใช้
+            model="gpt-4-turbo",
             messages=[
-                {"role": "system", "content": "You are an AI video prompt generator for cinematic AI models."},
+                {"role": "system", "content": "You are an AI that generates cinematic video prompts for filmmaking."},
                 {"role": "user", "content": prompt_text}
             ],
             temperature=temperature,
             max_tokens=max_tokens
         )
 
-        # ดึงผลลัพธ์ที่ AI สร้างขึ้น
-        ai_generated_prompt = response.choices[0].message.content.strip()
+        # ดึงผลลัพธ์ภาษาอังกฤษ
+        ai_generated_prompt = response.choices[0].message.content
 
-        # แปลเป็นภาษาไทย ถ้าผู้ใช้เลือกภาษา "th"
+        # แปลเป็นภาษาไทยถ้าผู้ใช้เลือกภาษา "th"
         thai_translation = ""
         if lang == "th":
-            thai_translation = translate_to_thai(ai_generated_prompt)
+            thai_response = client.chat.completions.create(
+                model="gpt-4-turbo",
+                messages=[
+                    {"role": "system", "content": "Translate the following text into fluent and natural Thai:"},
+                    {"role": "user", "content": ai_generated_prompt}
+                ],
+                temperature=0.5,  # ทำให้แปลตรงตัวมากขึ้น
+                max_tokens=max_tokens
+            )
+            thai_translation = thai_response.choices[0].message.content
 
         # ส่งผลลัพธ์กลับไป
         return jsonify({
             "English Prompt for AI": ai_generated_prompt,
             "Thai Explanation for Humans": thai_translation
-        }), 200, {'Content-Type': 'application/json; charset=utf-8'}
+        })
 
     except Exception as e:
-        return jsonify({"error": str(e)}), 500  # ส่ง Error ถ้ามีปัญหา
-
-def translate_to_thai(text):
-    """ ฟังก์ชันแปลภาษาอังกฤษเป็นไทย """
-    return f"🔹 คำอธิบายภาษาไทย: {text}"  # สามารถใช้ Google Translate API ได้ถ้าต้องการ
+        return jsonify({"error": str(e)}), 500  # แสดง Error ถ้ามีปัญหา
 
 if __name__ == '__main__':
-    app.run(host='0.0.0.0', port=10000)  # ใช้ Port 10000 ตามที่ตั้งค่าไว้
+    app.run(host='0.0.0.0', port=10000)  # ใช้ Port 10000
