@@ -23,7 +23,7 @@ def generate_prompt(category):
         lighting setup, atmosphere, and cinematic effects.
         """
 
-        # ส่งคำขอไปยัง OpenAI API
+        # ใช้โครงสร้างใหม่ของ OpenAI API
         response = openai.ChatCompletion.create(
             model="gpt-4-turbo",
             messages=[
@@ -35,7 +35,7 @@ def generate_prompt(category):
         )
 
         # ดึงผลลัพธ์
-        ai_generated_prompt = response.choices[0].message.content
+        ai_generated_prompt = response['choices'][0]['message']['content']
 
         # แปลเป็นภาษาไทยถ้าผู้ใช้ต้องการ
         thai_translation = ""
