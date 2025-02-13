@@ -19,34 +19,42 @@ trending_keywords = {
     "ฉากเขียว (Green Screen)": ["Chroma key backgrounds", "Virtual production assets"]
 }
 
+# เพิ่มโครงสร้างที่ยาวขึ้นสำหรับ Prompt
 base_prompts = {
-    "Cinematic AI": ["A futuristic cyberpunk city with neon lights, raining, cinematic atmosphere"],
-    "Abstract AI Motion Graphics": ["A seamless looping background of glowing light particles moving in a dark space"],
-    "Nature & Surreal": ["A magical enchanted forest with glowing trees and mystical creatures"],
-    "Business & Technology": ["A modern corporate office with AI holographic displays, futuristic design"],
-    "วิดีโอสต็อกแบบ 4K": ["A stunning 4K landscape video with breathtaking visuals"],
-    "วิดีโอแนวตั้ง": ["A vertical video optimized for mobile viewing with smooth transitions"],
-    "ธีมเพลตวิดีโอ": ["A pre-designed video template with customizable elements"],
-    "เพลงสต็อก": ["A stock music video with smooth and relaxing beats"],
-    "พื้นหลังวิดีโอ": ["An abstract moving background with neon waves"],
-    "ภาพเคลื่อนไหว": ["A 2D animated explainer video with modern graphics"],
-    "เอฟเฟกต์วิดีโอ": ["A video with stunning visual effects and cinematic transitions"],
-    "ฉากเขียว (Green Screen)": ["A dynamic green screen background for virtual production"]
+    "Cinematic AI": [
+        "A futuristic cyberpunk city with neon lights, raining, cinematic atmosphere, highly detailed, trending on Adobe Stock",
+        "A dystopian futuristic cityscape filled with towering skyscrapers, holographic billboards, and neon reflections on wet streets, cinematic feel, high dynamic range"
+    ],
+    "Abstract AI Motion Graphics": [
+        "A seamless looping animation of glowing light particles moving rhythmically in a dark space, futuristic and abstract, perfect for motion graphics",
+        "A dynamic explosion of neon light waves pulsating through space, creating an immersive sci-fi digital experience, smooth transitions"
+    ],
+    "Nature & Surreal": [
+        "A breathtaking bioluminescent ocean glowing under a starry night sky, waves crashing gently against surreal floating islands, dreamy atmosphere",
+        "A mystical forest with ancient glowing trees, surreal fantasy ambiance, ultra-detailed textures and atmospheric lighting"
+    ],
+    "Business & Technology": [
+        "A high-tech futuristic corporate office with AI-driven holographic interfaces and automated robotic assistants, professional and cutting-edge",
+        "A global financial trading hub with real-time digital market charts and augmented reality projections, cinematic stock footage quality"
+    ]
 }
 
-# ฟังก์ชันสุ่มหมวดหมู่ใหม่ ถ้าผู้ใช้พิมพ์คำที่ไม่มีอยู่ในระบบ
+# 🔥 ฟังก์ชันสุ่มหมวดหมู่ และเพิ่มคำอธิบายให้น่าสนใจขึ้น
 def generate_prompt(category):
     if category in trending_keywords:
         selected_keyword = random.choice(trending_keywords[category])
-        prompt = f"{random.choice(base_prompts[category])}, highly detailed, trending on Adobe Stock, {selected_keyword}"
+        detailed_prompt = random.choice(base_prompts[category])
+        # ✅ เพิ่มคำอธิบายให้ยาวขึ้น
+        prompt = f"{detailed_prompt}, realistic rendering, 4K ultra-HD, perfect for Adobe Stock, includes {selected_keyword} in a visually appealing style"
     else:
-        # ถ้าหมวดหมู่ไม่มีในระบบ ให้ GPT สร้างหมวดหมู่ใหม่แบบใกล้เคียง
         new_category = random.choice(list(trending_keywords.keys()))
         selected_keyword = random.choice(trending_keywords[new_category])
-        prompt = f"[Custom Category: {category}] {random.choice(base_prompts[new_category])}, highly detailed, trending on Adobe Stock, {selected_keyword}"
+        detailed_prompt = random.choice(base_prompts[new_category])
+        # ✅ เพิ่มโครงสร้างที่อธิบายภาพได้ดีขึ้น
+        prompt = f"[Custom Category: {category}] {detailed_prompt}, inspired by trending AI-generated visuals, ultra-detailed, best for cinematic stock footage, features {selected_keyword}"
     return prompt
 
-# API route
+# API Route
 @app.route('/get_prompt/<category>', methods=['GET'])
 def get_prompt(category):
     return jsonify({"prompt": generate_prompt(category)})
