@@ -12,8 +12,7 @@ if not api_key:
     print("🚨 ERROR: OPENAI_API_KEY is missing! Please set it in environment variables.")
     sys.exit(1)  # ปิดโปรแกรมทันที
 
-# ตั้งค่า API Key ให้ OpenAI
-openai.api_key = api_key
+openai.api_key = api_key  # ตั้งค่า API Key
 
 @app.route('/generate_prompt/<category>', methods=['GET'])
 def generate_prompt(category):
@@ -34,7 +33,7 @@ def generate_prompt(category):
         Write it in a **concise, clear, and cinematic format** like a **film direction**.
         """
 
-        # เรียกใช้ GPT เพื่อสร้าง AI Video Prompt
+        # เรียกใช้ OpenAI API
         try:
             response = openai.ChatCompletion.create(
                 model="gpt-4-turbo",
@@ -78,4 +77,4 @@ def translate_to_thai(text):
         return f"⚠️ Translation Error: {str(e)}"
 
 if __name__ == '__main__':
-    app.run(host='0.0.0.0', port=10000)  # ใช้ Port 10000
+    app.run(host='0.0.0.0', port=10000, debug=True)  # ใช้ Port 10000 พร้อม Debug Mode
