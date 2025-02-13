@@ -54,7 +54,7 @@ def generate_prompt(category):
         return jsonify({
             "English Prompt for AI": ai_generated_prompt,
             "Thai Explanation for Humans": thai_translation
-        })
+        }), 200, {'Content-Type': 'application/json; charset=utf-8'}
 
     except Exception as e:
         return jsonify({"error": str(e)}), 500  # ส่ง Error ถ้ามีปัญหา
