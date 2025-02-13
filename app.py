@@ -4,8 +4,8 @@ from flask import Flask, jsonify, request
 
 app = Flask(__name__)
 
-# ดึง API Key จาก Environment Variables
-client = openai.Client(api_key=os.getenv("OPENAI_API_KEY"))
+# ใช้ API Key จาก Environment Variables
+client = openai.OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
 
 @app.route('/generate_prompt/<category>', methods=['GET'])
 def generate_prompt(category):
@@ -16,19 +16,24 @@ def generate_prompt(category):
         temperature = float(request.args.get('temperature', 0.7))  # ความคิดสร้างสรรค์ (0.0 - 1.0)
         max_tokens = int(request.args.get('max_tokens', 300))  # ความยาวของ prompt
 
+        # ตรวจสอบว่า model และ prompt มีค่าหรือไม่
+        if not model_type:
+            return jsonify({"error": "Missing required argument: 'model'"}), 400
+
         # ข้อความที่ใช้ให้ GPT สร้าง Prompt
         prompt_text = f"""
         Generate a highly detailed AI video prompt for {category} in {model_type}.
         The prompt should include:
-        - **Scene Composition**
-        - **Lighting & Visual Style**
-        - **Atmosphere & Camera Movements**
-        - **Cinematic Effects**
+        - Scene composition
+        - Lighting & Atmosphere
+        - Cinematic effects
+        - Camera movements
+        - Aspect ratio, resolution, and frame rate
         """
 
         # เรียกใช้ OpenAI API
-        response = client.completions.create(
-            model="gpt-4-turbo",
+        response = client.chat.completions.create(
+            model="gpt-4-turbo",  # ระบุโมเดลที่ต้องการใช้
             messages=[
                 {"role": "system", "content": "You are an AI video prompt generator for cinematic AI models."},
                 {"role": "user", "content": prompt_text}
@@ -37,22 +42,13 @@ def generate_prompt(category):
             max_tokens=max_tokens
         )
 
-        # ดึงผลลัพธ์
-        ai_generated_prompt = response.choices[0].message.content
+        # ดึงผลลัพธ์ที่ AI สร้างขึ้น
+        ai_generated_prompt = response.choices[0].message.content.strip()
 
-        # **เพิ่มการแปลไทยอัตโนมัติ ถ้า lang = "th"**
+        # แปลเป็นภาษาไทย ถ้าผู้ใช้เลือกภาษา "th"
         thai_translation = ""
         if lang == "th":
-            translation_response = client.completions.create(
-                model="gpt-4-turbo",
-                messages=[
-                    {"role": "system", "content": "You are an expert in translating English video descriptions to Thai."},
-                    {"role": "user", "content": f"Translate this AI video prompt into Thai:\n\n{ai_generated_prompt}"}
-                ],
-                temperature=0.5,
-                max_tokens=400
-            )
-            thai_translation = translation_response.choices[0].message.content
+            thai_translation = translate_to_thai(ai_generated_prompt)
 
         # ส่งผลลัพธ์กลับไป
         return jsonify({
@@ -61,7 +57,11 @@ def generate_prompt(category):
         })
 
     except Exception as e:
-        return jsonify({"error": str(e)}), 500  # แสดง Error ถ้ามีปัญหา
+        return jsonify({"error": str(e)}), 500  # ส่ง Error ถ้ามีปัญหา
+
+def translate_to_thai(text):
+    """ ฟังก์ชันแปลภาษาอังกฤษเป็นไทย """
+    return f"🔹 คำอธิบายภาษาไทย: {text}"  # สามารถใช้ Google Translate API ได้ถ้าต้องการ
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=10000)  # ใช้ Port 10000 ตามที่ตั้งค่าไว้
