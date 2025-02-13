@@ -9,24 +9,21 @@ openai.api_key = os.getenv("OPENAI_API_KEY")
 
 @app.route('/generate_prompt/<category>', methods=['GET'])
 def generate_prompt(category):
-    model_type = request.args.get('model', 'Runway')  # Runway หรือ Kling
-    lang = request.args.get('lang', 'en')  # เลือกภาษา (en/th)
-    temperature = float(request.args.get('temperature', 0.7))  # ความคิดสร้างสรรค์ (0.0 - 1.0)
-    max_tokens = int(request.args.get('max_tokens', 300))  # ความยาวของ prompt
+    model_type = request.args.get('model', 'Runway')  # เลือก Runway หรือ Kling
+    lang = request.args.get('lang', 'en')  # ภาษา (en/th)
+    temperature = float(request.args.get('temperature', 0.7))  # ปรับความคิดสร้างสรรค์
+    max_tokens = int(request.args.get('max_tokens', 300))  # กำหนดความยาวของ prompt
 
-    response = openai.ChatCompletion.create(
+    response = openai.chat.completions.create(  # ใช้เวอร์ชันใหม่!
         model="gpt-4-turbo",
         messages=[
-            {"role": "system", "content": "You are an AI prompt generator specialized in Runway and Kling."},
-            {"role": "user", "content": f"Generate a detailed prompt for {category} in {lang} language, optimized for {model_type}, including cinematic style, resolution, and effects."}
+            {"role": "system", "content": "You are an AI prompt generator specialized in AI video generation."},
+            {"role": "user", "content": f"Generate a detailed prompt for {category} in {lang}"}
         ],
         temperature=temperature,
         max_tokens=max_tokens
     )
-
     return jsonify({"prompt": response.choices[0].message.content})
 
 if __name__ == '__main__':
-    port = int(os.environ.get("PORT", 10000))  # อ่านค่าพอร์ตจาก Environment Variables
-    app.run(host='0.0.0.0', port=port)
-
+    app.run(host='0.0.0.0', port=10000)
