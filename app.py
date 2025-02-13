@@ -4,8 +4,8 @@ from flask import Flask, jsonify, request
 
 app = Flask(__name__)
 
-# ใช้ API Key จาก Environment Variables
-client = openai.OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
+# ดึง API Key จาก Environment Variables
+client = openai.Client(api_key=os.getenv("OPENAI_API_KEY"))
 
 @app.route('/generate_prompt/<category>', methods=['GET'])
 def generate_prompt(category):
@@ -19,12 +19,15 @@ def generate_prompt(category):
         # ข้อความที่ใช้ให้ GPT สร้าง Prompt
         prompt_text = f"""
         Generate a highly detailed AI video prompt for {category} in {model_type}.
-        The prompt should include scene composition, lighting, atmosphere, cinematic effects,
-        and camera movements in a structured format.
+        The prompt should include:
+        - **Scene Composition**
+        - **Lighting & Visual Style**
+        - **Atmosphere & Camera Movements**
+        - **Cinematic Effects**
         """
 
-        # เรียกใช้ OpenAI API ตามเวอร์ชันใหม่
-        response = client.chat.completions.create(
+        # เรียกใช้ OpenAI API
+        response = client.completions.create(
             model="gpt-4-turbo",
             messages=[
                 {"role": "system", "content": "You are an AI video prompt generator for cinematic AI models."},
@@ -37,10 +40,19 @@ def generate_prompt(category):
         # ดึงผลลัพธ์
         ai_generated_prompt = response.choices[0].message.content
 
-        # แปลเป็นภาษาไทยถ้าผู้ใช้เลือกภาษา "th"
+        # **เพิ่มการแปลไทยอัตโนมัติ ถ้า lang = "th"**
         thai_translation = ""
         if lang == "th":
-            thai_translation = translate_to_thai(ai_generated_prompt)  # ฟังก์ชันแปลภาษา
+            translation_response = client.completions.create(
+                model="gpt-4-turbo",
+                messages=[
+                    {"role": "system", "content": "You are an expert in translating English video descriptions to Thai."},
+                    {"role": "user", "content": f"Translate this AI video prompt into Thai:\n\n{ai_generated_prompt}"}
+                ],
+                temperature=0.5,
+                max_tokens=400
+            )
+            thai_translation = translation_response.choices[0].message.content
 
         # ส่งผลลัพธ์กลับไป
         return jsonify({
@@ -50,10 +62,6 @@ def generate_prompt(category):
 
     except Exception as e:
         return jsonify({"error": str(e)}), 500  # แสดง Error ถ้ามีปัญหา
-
-def translate_to_thai(text):
-    """ ฟังก์ชันแปลภาษาอังกฤษเป็นไทย """
-    return "🔹 แปลเป็นไทย: " + text  # สามารถใช้ Google Translate API ได้ถ้าต้องการ
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=10000)  # ใช้ Port 10000 ตามที่ตั้งค่าไว้
