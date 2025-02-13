@@ -4,7 +4,7 @@ import openai
 from flask import Flask, jsonify, request
 
 app = Flask(__name__)
-app.config['JSON_AS_ASCII'] = False  # ทำให้ Flask คืนค่า JSON รองรับภาษาไทย
+app.config['JSON_AS_ASCII'] = False  # รองรับภาษาไทยใน JSON
 
 # ตรวจสอบ API Key และปิดแอปถ้าไม่มี
 api_key = os.getenv("OPENAI_API_KEY")
@@ -12,7 +12,8 @@ if not api_key:
     print("🚨 ERROR: OPENAI_API_KEY is missing! Please set it in environment variables.")
     sys.exit(1)  # ปิดโปรแกรมทันที
 
-openai.api_key = api_key  # ตั้งค่า API Key
+# ตั้งค่า OpenAI Client
+client = openai.OpenAI(api_key=api_key)
 
 @app.route('/generate_prompt/<category>', methods=['GET'])
 def generate_prompt(category):
@@ -20,7 +21,7 @@ def generate_prompt(category):
         # รับค่าจาก URL
         model_type = request.args.get('model', 'Runway')  # เลือกโมเดล Runway หรือ Kling
         lang = request.args.get('lang', 'en')  # ภาษา (en/th)
-        temperature = float(request.args.get('temperature', 0.7))  # ความคิดสร้างสรรค์ (0.0 - 1.0)
+        temperature = float(request.args.get('temperature', 0.7))  # ค่าความคิดสร้างสรรค์ (0.0 - 1.0)
         max_tokens = int(request.args.get('max_tokens', 300))  # ความยาวของ prompt
 
         # ข้อความที่ใช้ให้ GPT สร้าง Prompt
@@ -33,9 +34,9 @@ def generate_prompt(category):
         Write it in a **concise, clear, and cinematic format** like a **film direction**.
         """
 
-        # เรียกใช้ OpenAI API
+        # เรียกใช้ OpenAI API เวอร์ชันใหม่
         try:
-            response = openai.ChatCompletion.create(
+            response = client.chat.completions.create(
                 model="gpt-4-turbo",
                 messages=[
                     {"role": "system", "content": "You are an AI that generates cinematic video prompts for filmmaking."},
@@ -44,11 +45,11 @@ def generate_prompt(category):
                 temperature=temperature,
                 max_tokens=max_tokens
             )
-            ai_generated_prompt = response["choices"][0]["message"]["content"]
+            ai_generated_prompt = response.choices[0].message.content
         except Exception as e:
             return jsonify({"error": f"❌ OpenAI API request failed: {str(e)}"}), 500
 
-        # แปลเป็นภาษาไทยถ้าผู้ใช้เลือกภาษา "th"
+        # แปลเป็นภาษาไทยถ้าผู้ใช้เลือก lang=th
         thai_translation = translate_to_thai(ai_generated_prompt) if lang == "th" else ""
 
         # ส่งผลลัพธ์กลับไป
@@ -63,7 +64,7 @@ def generate_prompt(category):
 def translate_to_thai(text):
     """ใช้ OpenAI GPT-4 แปลภาษาอังกฤษเป็นไทย"""
     try:
-        response = openai.ChatCompletion.create(
+        response = client.chat.completions.create(
             model="gpt-4-turbo",
             messages=[
                 {"role": "system", "content": "Translate the following text into fluent, natural Thai:"},
@@ -72,9 +73,9 @@ def translate_to_thai(text):
             temperature=0.3,
             max_tokens=500
         )
-        return response["choices"][0]["message"]["content"]
+        return response.choices[0].message.content
     except Exception as e:
         return f"⚠️ Translation Error: {str(e)}"
 
 if __name__ == '__main__':
-    app.run(host='0.0.0.0', port=10000, debug=True)  # ใช้ Port 10000 พร้อม Debug Mode
+    app.run(host='0.0.0.0', port=10000)  # ใช้ Port 10000
