@@ -9,7 +9,7 @@ openai.api_key = os.getenv("OPENAI_API_KEY")
 
 @app.route('/generate_prompt/<category>', methods=['GET'])
 def generate_prompt(category):
-    model_type = request.args.get('model', 'Runway')  # ใช้ได้ทั้ง Runway หรือ Kling
+    model_type = request.args.get('model', 'Runway')  # ใช้ Runway เป็นค่าเริ่มต้น
     lang = request.args.get('lang', 'th')  # ค่าเริ่มต้นเป็นภาษาไทย
     temperature = float(request.args.get('temperature', 0.7))  # ค่าความคิดสร้างสรรค์
     max_tokens = int(request.args.get('max_tokens', 300))  # ความยาวของ prompt
